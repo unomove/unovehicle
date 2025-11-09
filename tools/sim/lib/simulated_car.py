@@ -102,8 +102,8 @@ class SimulatedCar:
     try:
       self.send_can_messages(simulator_state)
 
-      # if self.idx % 50 == 0: # only send panda states at 2hz
-      self.send_panda_state(simulator_state)
+      if self.idx % 50 == 0: # only send panda states at 2hz
+        self.send_panda_state(simulator_state)
 
       self.idx += 1
     except Exception:

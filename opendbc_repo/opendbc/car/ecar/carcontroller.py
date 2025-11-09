@@ -6,6 +6,7 @@ from opendbc.car.ecar.ecarcan import EcarCAN
 from opendbc.car.ecar.values import CarControllerParams
 from opendbc.car.lateral import apply_steer_angle_limits_vm
 from opendbc.car.vehicle_model import VehicleModel
+from opendbc.car import structs
 
 def get_safety_CP():
   from opendbc.car.tesla.interface import CarInterface
@@ -112,7 +113,8 @@ class CarController(CarControllerBase):
         can_sends.append(self.ecar_can.create_longitudinal_command(CS.out.vEgo, CS.out.gearShifter))
 
     # TODO: HUD control
-    new_actuators = actuators.as_builder()
+    # new_actuators = actuators.as_builder()
+    new_actuators = structs.CarControl.Actuators()
     new_actuators.steeringAngleDeg = self.apply_angle_last
     new_actuators.speed = CS.out.vEgo
 

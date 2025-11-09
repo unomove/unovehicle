@@ -67,7 +67,7 @@ procs = [
   # NativeProcess("loggerd", "system/loggerd", ["./loggerd"], logging),
   # NativeProcess("encoderd", "system/loggerd", ["./encoderd"], only_onroad),
   # NativeProcess("stream_encoderd", "system/loggerd", ["./encoderd", "--stream"], notcar),
-  PythonProcess("logmessaged", "system.logmessaged", always_run),
+  # PythonProcess("logmessaged", "system.logmessaged", always_run),
 
   # NativeProcess("camerad", "sys tem/camerad", ["./camerad"], driverview, enabled=not WEBCAM),
   PythonProcess("webcamerad", "tools.webcam.camerad", driverview, enabled=WEBCAM),
@@ -77,9 +77,9 @@ procs = [
   PythonProcess("timed", "system.timed", always_run, enabled=not PC),
 
   PythonProcess("modeld", "selfdrive.modeld.modeld", only_onroad),
-  PythonProcess("dmonitoringmodeld", "selfdrive.modeld.dmonitoringmodeld", driverview, enabled=(WEBCAM or not PC)),
+  # PythonProcess("dmonitoringmodeld", "selfdrive.modeld.dmonitoringmodeld", driverview, enabled=(WEBCAM or not PC)),
 
-  PythonProcess("sensord", "system.sensord.sensord", only_onroad, enabled=not PC),
+  # PythonProcess("sensord", "system.sensord.sensord", only_onroad, enabled=not PC),
   # NativeProcess("ui", "selfdrive/ui", ["./ui"], always_run, enabled=False, watchdog_max_dt=(5 if not PC else None)),
   PythonProcess("ui", "selfdrive.ui.ui", always_run),
   # PythonProcess("soundd", "selfdrive.ui.soundd", only_onroad),

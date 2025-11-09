@@ -44,7 +44,7 @@ def ui_thread(addr):
     write_x = 645
     write_y = 970
 
-  pygame.display.set_caption("openpilot debug UI")
+  pygame.display.set_caption("UnoPilot debug UI")
   screen = pygame.display.set_mode(size, pygame.DOUBLEBUF)
 
   alert1_font = pygame.font.SysFont("arial", 30)

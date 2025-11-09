@@ -40,9 +40,8 @@ brake, steering_angle, speed = 0, 0, 0
 print (GEAR.N)
 print (RunDirection.STOP)
 msg.append(ecar_can.create_cdcu_brake_status(brake, RunMode.AUTOMATIC))
-msg.append(ecar_can.create_cdcu_steer_status(steering_angle, RunMode.AUTOMATIC))
 msg.append(ecar_can.create_cdcu_drive_status(RunMode.AUTOMATIC, GEAR.D, RunDirection.FORWARD))
 msg.append(ecar_can.create_vehicle_dynamic_state(speed, RunDirection.FORWARD))
 
-d = ecar_can.create_cdcu_steer_status(steering_angle, RunMode.AUTOMATIC)
+d = ecar_can.create_vehicle_dynamic_state(speed, RunDirection.FORWARD)
 print (d)
