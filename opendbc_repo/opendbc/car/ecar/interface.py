@@ -45,7 +45,7 @@ class CarInterface(CarInterfaceBase):
     ret.lateralTuning.pid.kf = 6e-05
     ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0, 10], [0, 10]]
     ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.05, 0.5], [0.0125, 0.125]]
-    ret.lateralParams.torqueBP, ret.lateralParams.torqueV = [[0, 2560], [0, 2560]]
+    ret.lateralParams.torqueBP, ret.lateralParams.torqueV = [[0, CarControllerParams.STEER_ANGLE_MAX], [0, CarControllerParams.STEER_ANGLE_MAX]]
     ret.steerActuatorDelay = 0.1
 
 

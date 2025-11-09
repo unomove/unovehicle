@@ -12,6 +12,7 @@ class EcarCAN:
       "ADCU_Str_CtrlMode": 0, #Angle mode is 0, (Reserved) Curvature mode is 1
       "ADCU_Str_TgtAngle": -angle, # left positive, right negative
     }
+    print (f"ECAR Real Steer: {-angle} Deg!")
     return self.packer.make_can_msg("ADCU_SteerCmd", CANBUS.vehicle, values)
 
   def create_vehicle_dynamic_state(self, speed, run_direction):
@@ -19,6 +20,7 @@ class EcarCAN:
       "CDCU_Veh_LongtdnalSpd": speed, #kmph
       "CDCU_Veh_RunDir": run_direction,
     }
+
     return self.packer.make_can_msg("CDCU_VehDyncState", CANBUS.vehicle, values)
 
   def create_cdcu_steer_status(self, steer, steer_rate, steer_torque, work_mode):
@@ -37,6 +39,7 @@ class EcarCAN:
       "CDCU_EHB_BrkPedpos": brake,
       "CDCU_EHB_WorkMode": work_mode,
     }
+
     return self.packer.make_can_msg("CDCU_BrakeStatus", CANBUS.vehicle, values)
 
   def create_cdcu_drive_status(self, work_mode, gear_act, run_direction):
@@ -56,15 +59,19 @@ class EcarCAN:
       "ADCU_Drv_TgtVehSpd0": set_speed,
       "ADCU_Drv_VehSpdLimit": CarControllerParams.SPEED_MAX,
     }
+
+    print (f"ECAR Real Speed: {set_speed} KM/H!")
     return self.packer.make_can_msg("ADCU_DriveCmd", CANBUS.vehicle, values)
 
   def _brake_cmd_msg(self, brake: float, pos_mode: int = 0):
+    set_brake = brake*100
     values = {
       "ADCU_Brk_Active": 1,
       "ADCU_Brk_CtrlMode": 0 if pos_mode else 1, #0 Brake Pedal Pos Mode, 1 Brake Pressure Mode
-      "ADCU_Brk_TgtPedpos": brake,
-      "ADCU_Brk_TgtPress": brake,
+      "ADCU_Brk_TgtPedpos": set_brake, # [0,1] -> [0, 100]
+      "ADCU_Brk_TgtPress": 0,
     }
+    print (f"ECAR Real Brake: {set_brake} %!")
     return self.packer.make_can_msg("ADCU_BrakeCmd", CANBUS.vehicle, values)
 
   def _park_cmd_msg(self, enable: int):

@@ -83,7 +83,7 @@ class CarController(CarControllerBase):
     self.brake = 0.0
     self.last_torque = 0.0
 
-  def update(self, CC, CS, now_nanos):
+  def update_old(self, CC, CS, now_nanos):
     actuators = CC.actuators
     can_sends = []
 
@@ -122,11 +122,9 @@ class CarController(CarControllerBase):
     return new_actuators, can_sends
 
 
-  def update_old(self, CC, CS, now_nanos):
+  def update(self, CC, CS, now_nanos):
     actuators = CC.actuators
     can_sends = []
-
-    return actuators, can_sends
 
     pcm_cancel_cmd = CC.cruiseControl.cancel
 
@@ -152,7 +150,7 @@ class CarController(CarControllerBase):
     apply_torque = int(np.interp(-limited_torque * self.params.STEER_MAX,
                                  self.params.STEER_LOOKUP_BP, self.params.STEER_LOOKUP_V))
 
-    #torque for steering control
+    print (f"{self.params.STEER_MAX=} {self.params.STEER_LOOKUP_BP=} {self.params.STEER_LOOKUP_V=}")
 
     # wind brake from air resistance decel at high speed
     wind_brake = np.interp(CS.out.vEgo, [0.0, 2.3, 35.0], [0.001, 0.002, 0.15])
@@ -175,39 +173,25 @@ class CarController(CarControllerBase):
       pcm_accel = int(np.clip((accel / 1.44) / max_accel, 0.0, 1.0) * self.params.ECAR_GAS_MAX)
     self.speed = pcm_speed
     self.gas = pcm_accel / self.params.ECAR_GAS_MAX
-    # Tesla EPS enforces disabling steering on heavy lateral override force.
-    # When enabling in a tight curve, we wait until user reduces steering force to start steering.
-    # Canceling is done on rising edge and is handled generically with CC.cruiseControl.cancel
-    if not self.CP.openpilotLongitudinalControl:
-      if self.frame % 2 == 0:
-        # can_sends.append(hondacan.create_bosch_supplemental_1(self.packer, self.CAN))
-        pass
-      # If using stock ACC, spam cancel command to kill gas when OP disengages.
-      if pcm_cancel_cmd:
-        # can_sends.append(hondacan.spam_buttons_command(self.packer, self.CAN, CruiseButtons.CANCEL, self.CP.carFingerprint))
-        pass
-      elif CC.cruiseControl.resume:
-        # can_sends.append(hondacan.spam_buttons_command(self.packer, self.CAN, CruiseButtons.RES_ACCEL, self.CP.carFingerprint))
-        pass
 
-    else:
       # Send gas and brake commands.
-      if self.frame % 2 == 0:
-        ts = self.frame * DT_CTRL
+    if self.frame % 2 == 0:
+      ts = self.frame * DT_CTRL
 
-        apply_brake = np.clip(self.brake_last - wind_brake, 0.0, 1.0)
-        apply_brake = int(np.clip(apply_brake * self.params.ECAR_BRAKE_MAX, 0, self.params.ECAR_BRAKE_MAX - 1))
-        pump_on, self.last_pump_ts = brake_pump_hysteresis(apply_brake, self.apply_brake_last, self.last_pump_ts, ts)
+      apply_brake = np.clip(self.brake_last - wind_brake, 0.0, 1.0)
+      apply_brake = int(np.clip(apply_brake * self.params.ECAR_BRAKE_MAX, 0, self.params.ECAR_BRAKE_MAX - 1))
+      pump_on, self.last_pump_ts = brake_pump_hysteresis(apply_brake, self.apply_brake_last, self.last_pump_ts, ts)
+      self.apply_brake_last = apply_brake
+      self.brake = apply_brake / self.params.ECAR_BRAKE_MAX
 
-        # pcm_override = True
-        # can_sends.append(hondacan.create_brake_command(self.packer, self.CAN, apply_brake, pump_on,
-        #                                                 pcm_override, pcm_cancel_cmd, alert_fcw,
-        #                                                 self.CP.carFingerprint, CS.stock_brake))
-        self.apply_brake_last = apply_brake
-        self.brake = apply_brake / self.params.ECAR_BRAKE_MAX
-
+    #torque for steering control
+    can_sends.append(self.ecar_can.create_steering_control(apply_torque))
+    can_sends.append(self.ecar_can.create_longitudinal_command(self.speed, CS.out.gearShifter))
+    can_sends.append(self.ecar_can._brake_cmd_msg(self.brake, 0x0))
+    can_sends.append(self.ecar_can._park_cmd_msg(0))
     # TODO: HUD control
-    new_actuators = actuators.as_builder()
+    # new_actuators = actuators.as_builder()
+    new_actuators = structs.CarControl.Actuators()
     new_actuators.speed = self.speed
     new_actuators.accel = self.accel
     new_actuators.gas = self.gas
@@ -215,5 +199,6 @@ class CarController(CarControllerBase):
     new_actuators.torque = self.last_torque
     new_actuators.torqueOutputCan = apply_torque
 
+    print (f"{new_actuators=}")
     self.frame += 1
     return new_actuators, can_sends

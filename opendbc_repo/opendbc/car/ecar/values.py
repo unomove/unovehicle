@@ -77,6 +77,7 @@ class CarControllerParams:
   )
 
   SPEED_MAX = 10 #km/h, max_speed of Ecar E70
+  STEER_ANGLE_MAX = 30 # deg, max steering angle of Ecar E70
 
   ECAR_ACCEL_MIN = -4.0  # m/s^2
   ECAR_ACCEL_MAX = 1.6  # m/s^2, lower than 2.0 m/s^2 for tuning reasons
