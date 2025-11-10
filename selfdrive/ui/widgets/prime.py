@@ -29,12 +29,13 @@ class PrimeWidget(Widget):
     w = rect.width - 160
 
     # Title
-    gui_label(rl.Rectangle(x, y, w, 90), "Upgrade Now", 75, font_weight=FontWeight.BOLD)
+    gui_label(rl.Rectangle(x, y, w, 90), "UnoPilot", 75, font_weight=FontWeight.BOLD)
 
     # Description with wrapping
     desc_y = y + 140
     font = gui_app.font(FontWeight.LIGHT)
-    wrapped_text = "\n".join(wrap_text(font, "Become a comma prime member at connect.comma.ai", 56, int(w)))
+    # wrapped_text = "\n".join(wrap_text(font, "Become a comma prime member at connect.comma.ai", 56, int(w)))
+    wrapped_text = "\n".join(wrap_text(font, "This is the development version of unopilot!", 56, int(w)))
     text_size = measure_text_cached(font, wrapped_text, 56)
     rl.draw_text_ex(font, wrapped_text, rl.Vector2(x, desc_y), 56, 0, rl.WHITE)
 
