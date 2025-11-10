@@ -62,6 +62,7 @@ dependencies = [
   "raylib < 5.5.0.3", # TODO: unpin when they fix https://github.com/electronstudio/raylib-python-cffi/issues/186
   "qrcode",
   "mapbox-earcut",
+  "python-can>=4.6.1",
 ]
 
 [project.optional-dependencies]

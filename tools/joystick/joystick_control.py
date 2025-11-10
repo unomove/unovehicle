@@ -105,7 +105,6 @@ def send_thread(joystick):
     joystick_msg.testJoystick.axes = [joystick.axes_values[ax] for ax in joystick.axes_order]
 
     pm.send('testJoystick', joystick_msg)
-
     rk.keep_time()
 
 
