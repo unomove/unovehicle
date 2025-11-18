@@ -199,6 +199,6 @@ class CarController(CarControllerBase):
     new_actuators.torque = self.last_torque
     new_actuators.torqueOutputCan = apply_torque
 
-    print (f"{new_actuators=}")
+    # print (f"{new_actuators=}")
     self.frame += 1
     return new_actuators, can_sends

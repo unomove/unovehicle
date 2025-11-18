@@ -53,4 +53,7 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
+  @staticmethod
+  def init(CP, can_recv, can_send, communication_control=None):
+    pass
 # print (CarInterface.get_pid_accel_limits(None, 10, 20))

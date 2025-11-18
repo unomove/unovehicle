@@ -12,6 +12,7 @@ from opendbc.car.structs import CarControl
 from opendbc.car.unocan_runner import UnocanRunner
 
 
+
 class Keyboard:
   def __init__(self):
     self.kb = KBHit()
@@ -89,7 +90,7 @@ def main(joystick):
     while True:
       CC.actuators.accel = float(4.0*np.clip(joystick.axes_values['gb'], -1, 1))
       CC.actuators.torque = float(np.clip(joystick.axes_values['steer'], -1, 1))
-      pprint(CC)
+      # pprint(CC)
       uc.read()
       uc.write(CC)
       # 100Hz

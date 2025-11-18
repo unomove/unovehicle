@@ -1,4 +1,5 @@
 venv/
+._*
 .venv/
 .ci_cache
 .env

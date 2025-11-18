@@ -6,9 +6,9 @@ class EcarCAN:
   def __init__(self, packer):
     self.packer = packer
 
-  def create_steering_control(self, angle):
+  def create_steering_control(self, angle, active=1):
     values = {
-      "ADCU_Str_Active": 1,
+      "ADCU_Str_Active": active,
       "ADCU_Str_CtrlMode": 0, #Angle mode is 0, (Reserved) Curvature mode is 1
       "ADCU_Str_TgtAngle": -angle, # left positive, right negative
     }
@@ -50,10 +50,10 @@ class EcarCAN:
     }
     return self.packer.make_can_msg("CDCU_DriveStatus", CANBUS.vehicle, values)
 
-  def create_longitudinal_command(self, v_ego, gear):
+  def create_longitudinal_command(self, v_ego, gear, active=1):
     set_speed = max(v_ego * CV.MS_TO_KPH, 0)
     values = {
-      "ADCU_Drv_Active":1,
+      "ADCU_Drv_Active":active,
       "ADCU_Drv_CtrlMode": 1, #1: Speed control, 0: Throttle control
       "ADCU_Drv_TgtGear": GEAR_INVERSE_MAP[gear], #0: Neutral, 1: Drive, 2: Reverse,
       "ADCU_Drv_TgtVehSpd0": set_speed,
@@ -63,10 +63,10 @@ class EcarCAN:
     print (f"ECAR Real Speed: {set_speed} KM/H!")
     return self.packer.make_can_msg("ADCU_DriveCmd", CANBUS.vehicle, values)
 
-  def _brake_cmd_msg(self, brake: float, pos_mode: int = 0):
+  def _brake_cmd_msg(self, brake: float, pos_mode: int = 0, active=1):
     set_brake = brake*100
     values = {
-      "ADCU_Brk_Active": 1,
+      "ADCU_Brk_Active": active,
       "ADCU_Brk_CtrlMode": 0 if pos_mode else 1, #0 Brake Pedal Pos Mode, 1 Brake Pressure Mode
       "ADCU_Brk_TgtPedpos": set_brake, # [0,1] -> [0, 100]
       "ADCU_Brk_TgtPress": 0,
@@ -74,9 +74,9 @@ class EcarCAN:
     print (f"ECAR Real Brake: {set_brake} %!")
     return self.packer.make_can_msg("ADCU_BrakeCmd", CANBUS.vehicle, values)
 
-  def _park_cmd_msg(self, enable: int):
+  def _park_cmd_msg(self, enable: int, active=1):
     values = {
-      "ADCU_Prk_Active": 1,
+      "ADCU_Prk_Active": active,
       "ADCU_Prk_Enable": 1 if enable else 0,
     }
     return self.packer.make_can_msg("ADCU_ParkCmd", CANBUS.vehicle, values)

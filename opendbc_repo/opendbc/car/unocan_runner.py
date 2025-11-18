@@ -4,8 +4,9 @@ from contextlib import AbstractContextManager
 from unocan import CanHandle
 from opendbc.car.car_helpers import get_car
 from opendbc.car.can_definitions import CanData
-from opendbc.car.structs import CarParams, CarControl
-
+from opendbc.car.structs import CarParams, CarControl, CarState
+from tqdm import tqdm
+import time
 
 class UnocanRunner(AbstractContextManager):
   def __enter__(self):
@@ -13,6 +14,16 @@ class UnocanRunner(AbstractContextManager):
     self.CI = get_car(self._can_recv, self.ch.can_send_many, self.ch.set_obd, True, False)
     assert self.CI.CP.carFingerprint.lower() != "mock", "Unable to identify car. Check connections and ensure car is supported."
     self.CI.init(self.CI.CP, self._can_recv, self.ch.can_send_many)
+
+    print ("Getting Ready for Autocontrol")
+    can_sends=[self.CI.CC.ecar_can.create_steering_control(0,active=0),
+    self.CI.CC.ecar_can.create_longitudinal_command(0, "drive", active=0),
+    self.CI.CC.ecar_can._brake_cmd_msg(0, 0x0,active=0),
+    self.CI.CC.ecar_can._park_cmd_msg(0,active=0),
+    ]
+    for i in tqdm(range(10)):
+      self.ch.can_send_many(can_sends)
+      time.sleep(1)
     return self
 
   def __exit__(self, exc_type, exc_value, traceback):
@@ -40,7 +51,7 @@ class UnocanRunner(AbstractContextManager):
       # prevent the car from faulting. print a warning?
       cc = CarControl(enabled=False)
     _, can_sends = self.CI.apply(cc)
-    print ("can sends", can_sends)
+    # print ("can sends", can_sends)
     self.ch.can_send_many(can_sends, timeout=25)
 
 if __name__ == "__main__":

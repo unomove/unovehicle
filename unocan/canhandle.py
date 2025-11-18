@@ -1,4 +1,8 @@
 from .utils import logger
+import can
+# can.rc["interface"] = "socketcan"
+# can.rc["channel"] = "can1"
+# can.rc["bitrate"] = 500000
 
 CANPACKET_HEAD_SIZE = 0x6
 DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
@@ -64,10 +68,12 @@ def unpack_can_buffer(dat):
 
 class CanHandle:
   # TODO: implement can_send_many and can_recv
-  def __init__(self, interface: str = "can0", bus: int = 0, fd: bool = False):
-    self.interface = interface
+  def __init__(self, channel: str = "can0", bus: int = 0, fd: bool = False):
+    self.interface = "socketcan"
+    self.channel = channel
     self.bus = bus
     self.fd = fd
+    self.bus = can.Bus(interface=self.interface, channel=self.channel)
 
   def can_send(self, address: int, data: bytes, bus: int = 0):
     self.can_send_many([(address, data, bus)])
@@ -75,6 +81,10 @@ class CanHandle:
   def can_send_many(self, messages: list[tuple[int, bytes, int]], timeout: int = 25):
     # logger.info(f"Sending {len(messages)} messages {messages}")
     logger.info(f"Sending {len(messages)} messages")
+    for msg in messages:
+      can_msg = can.Message(arbitration_id=msg[0], data=msg[1], is_extended_id=True)
+      print ("sent ", can_msg)
+      self.bus.send(can_msg)
 
   def set_obd(self, obd):
     pass
@@ -89,6 +99,9 @@ class CanHandle:
     # self.can_recv()
     # logger.info("Receiving messages")
     # debug use
+    # return [(592, b'\x00\x00\x00\x00\x00\x00@\x00', 0)]
+    msg = self.bus.recv(0.1)
+    print ("receive msg", len(msg))
     return [(592, b'\x00\x00\x00\x00\x00\x00@\x00', 0)]
 
   def reset(self):
