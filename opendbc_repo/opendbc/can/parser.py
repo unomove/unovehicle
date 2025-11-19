@@ -60,7 +60,7 @@ class MessageState:
 
       if not self.ignore_checksum and sig.calc_checksum is not None:
         if sig.calc_checksum(self.address, sig, bytearray(dat)) != tmp:
-          print(f"little  {sig.is_little_endian} {hex(self.address)} {self.name} checks failed, {dat=} {dat.hex()=} checksum={sig.calc_checksum(self.address, sig, bytearray(dat))} {ecar_checksum(self.address, sig, bytearray(dat))} raw_value={tmp=}")
+          # print(f"little  {sig.is_little_endian} {hex(self.address)} {self.name} checks failed, {dat=} {dat.hex()=} checksum={sig.calc_checksum(self.address, sig, bytearray(dat))} {ecar_checksum(self.address, sig, bytearray(dat))} raw_value={tmp=}")
           checksum_failed = True
 
       if not self.ignore_counter and sig.type == 1:  # COUNTER

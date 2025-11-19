@@ -76,7 +76,7 @@ class CarControllerParams:
     MAX_ANGLE_RATE=5,  # deg/20ms frame, EPS faults at 12 at a standstill
   )
 
-  SPEED_MAX = 10 #km/h, max_speed of Ecar E70
+  SPEED_MAX = 5 #km/h, max_speed of Ecar E70
   STEER_ANGLE_MAX = 30 # deg, max steering angle of Ecar E70
 
   ECAR_ACCEL_MIN = -4.0  # m/s^2

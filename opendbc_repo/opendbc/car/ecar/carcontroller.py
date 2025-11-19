@@ -186,9 +186,11 @@ class CarController(CarControllerBase):
 
     #torque for steering control
     can_sends.append(self.ecar_can.create_steering_control(apply_torque))
-    can_sends.append(self.ecar_can.create_longitudinal_command(self.speed, CS.out.gearShifter))
+    can_sends.append(self.ecar_can.create_longitudinal_command(self.speed, "drive"))
     can_sends.append(self.ecar_can._brake_cmd_msg(self.brake, 0x0))
     can_sends.append(self.ecar_can._park_cmd_msg(0))
+    can_sends.append(self.ecar_can._bocy_cmd_msg())
+    can_sends.append(self.ecar_can._power_info_msg())
     # TODO: HUD control
     # new_actuators = actuators.as_builder()
     new_actuators = structs.CarControl.Actuators()

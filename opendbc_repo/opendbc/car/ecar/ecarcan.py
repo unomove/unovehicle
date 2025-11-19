@@ -74,6 +74,25 @@ class EcarCAN:
     print (f"ECAR Real Brake: {set_brake} %!")
     return self.packer.make_can_msg("ADCU_BrakeCmd", CANBUS.vehicle, values)
 
+  def _bocy_cmd_msg(self, active=1):
+    values = {
+      "ADCU_LampCmd_Active": active,
+      "ADCU_HeadLamp_Cmd": 0,
+      "ADCU_DblFlashLamp_Cmd": 0,
+      "ADCU_TurnLLamp_Cmd": 0,
+      "ADCU_TurnRLamp_Cmd": 0,
+      "ADCU_BackLamp_Cmd": 0,
+      "ADCU_Buzzer_Cmd": 0,
+      "ADCU_Horn_Cmd": 0,
+      "ADCU_RunLamp_Cmd": 0,
+      "ADCU_BrkLamp_Cmd": 0,
+      "ADCU_FogLamp_Cmd": 0,
+      "ADCU_WidthLamp_Cmd": 0,
+      "ADCU_Wiper_Cmd": 0,
+      "ADCU_StripLamp_Cmd": 0,
+    }
+    return self.packer.make_can_msg("ADCU_BodyCmd", CANBUS.vehicle, values)
+
   def _park_cmd_msg(self, enable: int, active=1):
     values = {
       "ADCU_Prk_Active": active,
@@ -83,7 +102,7 @@ class EcarCAN:
 
   def _power_info_msg(self, power_down: int = 0x0, charger_gun: int = 0x0):
     values = {
-      "ADCU_AD12VMCPwrup_Cmd": charger_gun,
+      "ADCU_ChgConnect_St": charger_gun,
       "ADCU_ChasPwrdown_Req": power_down,
     }
     return self.packer.make_can_msg("ADCU_PowerInfo", CANBUS.vehicle, values)

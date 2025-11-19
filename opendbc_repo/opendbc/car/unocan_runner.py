@@ -16,10 +16,13 @@ class UnocanRunner(AbstractContextManager):
     self.CI.init(self.CI.CP, self._can_recv, self.ch.can_send_many)
 
     print ("Getting Ready for Autocontrol")
-    can_sends=[self.CI.CC.ecar_can.create_steering_control(0,active=0),
-    self.CI.CC.ecar_can.create_longitudinal_command(0, "drive", active=0),
-    self.CI.CC.ecar_can._brake_cmd_msg(0, 0x0,active=0),
-    self.CI.CC.ecar_can._park_cmd_msg(0,active=0),
+    can_sends=[
+      self.CI.CC.ecar_can.create_steering_control(0,active=0),
+      self.CI.CC.ecar_can.create_longitudinal_command(0, "neutral", active=0),
+      self.CI.CC.ecar_can._brake_cmd_msg(0, 0x0,active=0),
+      self.CI.CC.ecar_can._park_cmd_msg(0,active=0),
+      self.CI.CC.ecar_can._bocy_cmd_msg(active=0),
+      self.CI.CC.ecar_can._power_info_msg(),
     ]
     for i in tqdm(range(10)):
       self.ch.can_send_many(can_sends)
