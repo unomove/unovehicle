@@ -23,7 +23,7 @@ class UnocanRunner(AbstractContextManager):
     ]
     for i in tqdm(range(10)):
       self.ch.can_send_many(can_sends)
-      time.sleep(1)
+      time.sleep(0.05)
     return self
 
   def __exit__(self, exc_type, exc_value, traceback):

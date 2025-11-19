@@ -1,5 +1,6 @@
 from .utils import logger
 import can
+can_logger = can.Logger(filename='can_log.asc', append=False)
 # can.rc["interface"] = "socketcan"
 # can.rc["channel"] = "can1"
 # can.rc["bitrate"] = 500000
@@ -74,6 +75,7 @@ class CanHandle:
     self.bus = bus
     self.fd = fd
     self.bus = can.Bus(interface=self.interface, channel=self.channel)
+    notifier = can.Notifier(self.bus, [can_logger])
 
   def can_send(self, address: int, data: bytes, bus: int = 0):
     self.can_send_many([(address, data, bus)])
@@ -82,7 +84,7 @@ class CanHandle:
     # logger.info(f"Sending {len(messages)} messages {messages}")
     logger.info(f"Sending {len(messages)} messages")
     for msg in messages:
-      can_msg = can.Message(arbitration_id=msg[0], data=msg[1], is_extended_id=True)
+      can_msg = can.Message(arbitration_id=msg[0], data=msg[1], is_extended_id=False, is_rx=False, channel=self.channel)
       print ("sent ", can_msg)
       self.bus.send(can_msg)
 

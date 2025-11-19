@@ -15,6 +15,7 @@ from opendbc.car.volkswagen.mqbcan import volkswagen_mqb_meb_checksum, xor_check
 from opendbc.car.tesla.teslacan import tesla_checksum
 from opendbc.car.body.bodycan import body_checksum
 from opendbc.car.psa.psacan import psa_checksum
+from opendbc.car.ecar.ecarcan import ecar_checksum
 
 
 class SignalType:
@@ -31,6 +32,7 @@ class SignalType:
   FCA_GIORGIO_CHECKSUM = 10
   TESLA_CHECKSUM = 11
   PSA_CHECKSUM = 12
+  ECAR_CHECKSUM = 13
 
 
 @dataclass
@@ -157,6 +159,13 @@ class DBC:
 
 # ***** checksum functions *****
 
+def ecar_setup_signal(sig: Signal, dbc_name: str, line_num: int) -> None:
+  if sig.name.endswith("RollCnt"):
+    sig.type = SignalType.COUNTER
+  elif sig.name.endswith("Checksum"):
+    sig.type = SignalType.ECAR_CHECKSUM
+    sig.calc_checksum = ecar_checksum
+
 def tesla_setup_signal(sig: Signal, dbc_name: str, line_num: int) -> None:
   if sig.name.endswith("Counter"):
     sig.type = SignalType.COUNTER
@@ -200,6 +209,8 @@ def get_checksum_state(dbc_name: str) -> ChecksumState | None:
     return ChecksumState(8, -1, 0, -1, True, SignalType.TESLA_CHECKSUM, tesla_checksum, tesla_setup_signal)
   elif dbc_name.startswith("psa_"):
     return ChecksumState(4, 4, 7, 3, False, SignalType.PSA_CHECKSUM, psa_checksum)
+  elif dbc_name.startswith("ecar"):
+    return ChecksumState(8, 4, 7, 6, False, SignalType.ECAR_CHECKSUM, ecar_checksum, ecar_setup_signal)
   return None
 
 
