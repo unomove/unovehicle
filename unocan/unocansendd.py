@@ -14,7 +14,8 @@ class CanSend:
     self.sm.update()
     if self.sm.valid['sendcan']:
       self.ch.can_send_many(self.sm["sendcan"], timeout=25)
-      self.rk.keep_time()
+    self.ch.can_recv()
+    self.rk.keep_time()
 
   def cansend_thread(self):
     while True:

@@ -1,71 +1,9 @@
 from .utils import logger
 import can
 
-# can.rc["interface"] = "socketcan"
-# can.rc["channel"] = "can1"
-# can.rc["bitrate"] = 500000
-
-# CANPACKET_HEAD_SIZE = 0x6
-# DLC_TO_LEN = [0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64]
-# LEN_TO_DLC = {length: dlc for (dlc, length) in enumerate(DLC_TO_LEN)}
-
-# def calculate_checksum(data):
-#   res = 0
-#   for b in data:
-#     res ^= b
-#   return res
-
-# def pack_can_buffer(arr, chunk=False, fd=False):
-#   snds = [bytearray(), ]
-#   for address, dat, bus in arr:
-#     extended = 1 if address >= 0x800 else 0
-#     data_len_code = LEN_TO_DLC[len(dat)]
-#     header = bytearray(CANPACKET_HEAD_SIZE)
-#     word_4b = (address << 3) | (extended << 2)
-#     header[0] = (data_len_code << 4) | (bus << 1) | int(fd)
-#     header[1] = word_4b & 0xFF
-#     header[2] = (word_4b >> 8) & 0xFF
-#     header[3] = (word_4b >> 16) & 0xFF
-#     header[4] = (word_4b >> 24) & 0xFF
-#     header[5] = calculate_checksum(header[:5] + dat)
-
-#     snds[-1].extend(header)
-#     snds[-1].extend(dat)
-#     if chunk and len(snds[-1]) > 256:
-#       snds.append(bytearray())
-
-#   return snds
-
-# def unpack_can_buffer(dat):
-#   ret = []
-
-#   while len(dat) >= CANPACKET_HEAD_SIZE:
-#     data_len = DLC_TO_LEN[(dat[0]>>4)]
-
-#     header = dat[:CANPACKET_HEAD_SIZE]
-
-#     bus = (header[0] >> 1) & 0x7
-#     address = (header[4] << 24 | header[3] << 16 | header[2] << 8 | header[1]) >> 3
-
-#     if (header[1] >> 1) & 0x1:
-#       # returned
-#       bus += 128
-#     if header[1] & 0x1:
-#       # rejected
-#       bus += 192
-
-#     # we need more from the next transfer
-#     if data_len > len(dat) - CANPACKET_HEAD_SIZE:
-#       break
-
-#     assert calculate_checksum(dat[:(CANPACKET_HEAD_SIZE+data_len)]) == 0, "CAN packet checksum incorrect"
-
-#     data = dat[CANPACKET_HEAD_SIZE:(CANPACKET_HEAD_SIZE+data_len)]
-#     dat = dat[(CANPACKET_HEAD_SIZE+data_len):]
-
-#     ret.append((address, data, bus))
-
-#   return (ret, dat)
+from openpilot.selfdrive.pandad.pandad_api_impl import can_list_to_can_capnp
+from opendbc.car.common.conversions import Conversions as CV
+import cereal.messaging as messaging
 
 class CanHandle:
   # TODO: implement can_send_many and can_recv
@@ -74,8 +12,9 @@ class CanHandle:
     self.channel = channel
     self.bus = bus
     self.fd = fd
-    self.can_logger = can.Logger(filename='can_log.asc', append=False)
+    # self.can_logger = can.Logger(filename='can_log.asc', append=False)
     self.bus = can.Bus(interface=self.interface, channel=self.channel, bitrate=500000)
+    self.pm = messaging.PubMaster(['can'])
     # notifier = can.Notifier(self.bus, [self.can_logger, can.Printer()])
 
   def can_send(self, address: int, data: bytes, bus: int = 0):
@@ -85,8 +24,10 @@ class CanHandle:
     # logger.info(f"Sending {len(messages)} messages {messages}")
     logger.info(f"Sending {len(messages)} messages")
     for msg in messages:
-      can_msg = can.Message(arbitration_id=msg[0], data=msg[1], is_extended_id=False, is_rx=False, channel=self.channel)
-      print ("sent ", can_msg)
+      # print ("sending msg", msg)
+      # can_msg = can.Message(arbitration_id=msg[0], data=msg[1], is_extended_id=False, is_rx=False, channel=self.channel)
+      can_msg = can.Message(arbitration_id=msg.address, data=msg.dat, is_extended_id=False, is_rx=False, channel=self.channel)
+      # print ("sent ", can_msg)
       self.bus.send(can_msg)
 
   def set_obd(self, obd):
@@ -104,8 +45,16 @@ class CanHandle:
     # debug use
     # return [(592, b'\x00\x00\x00\x00\x00\x00@\x00', 0)]
     msg = self.bus.recv(0.1)
-    print ("receive msg", len(msg))
-    return [(592, b'\x00\x00\x00\x00\x00\x00@\x00', 0)]
+    msg_list = []
+    if msg is None:
+      msg_list = [] # empty list
+    else:
+      msg_list.append((msg.arbitration_id, msg.data, 0))
+    # print ("receive can messages from unocan board from Ecar E70", len(msg_list))
+    # print (msg_list)
+    self.pm.send("can", can_list_to_can_capnp(msg_list))
+    # print (msg)
+    return msg_list
 
   def reset(self):
     logger.info("Resetting CAN handle")
