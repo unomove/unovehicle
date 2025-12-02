@@ -24,8 +24,11 @@ class UnocanRunner(AbstractContextManager):
       self.CI.CC.ecar_can._bocy_cmd_msg(active=0),
       self.CI.CC.ecar_can._power_info_msg(),
     ]
+
+    real_sends = [CanData(addr, dat, bus) for addr, dat, bus in can_sends]
+
     for i in tqdm(range(10)):
-      self.ch.can_send_many(can_sends)
+      self.ch.can_send_many(real_sends)
       time.sleep(0.05)
     return self
 
@@ -54,8 +57,9 @@ class UnocanRunner(AbstractContextManager):
       # prevent the car from faulting. print a warning?
       cc = CarControl(enabled=False)
     _, can_sends = self.CI.apply(cc)
+    real_sends = [CanData(addr, dat, bus) for addr, dat, bus in can_sends]
     # print ("can sends", can_sends)
-    self.ch.can_send_many(can_sends, timeout=25)
+    self.ch.can_send_many(real_sends, timeout=25)
 
 if __name__ == "__main__":
   with UnocanRunner() as uc:

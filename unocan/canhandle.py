@@ -4,6 +4,7 @@ import can
 from openpilot.selfdrive.pandad.pandad_api_impl import can_list_to_can_capnp
 from opendbc.car.common.conversions import Conversions as CV
 import cereal.messaging as messaging
+from opendbc.car.can_definitions import CanData
 
 class CanHandle:
   # TODO: implement can_send_many and can_recv
@@ -25,7 +26,6 @@ class CanHandle:
     logger.info(f"Sending {len(messages)} messages")
     for msg in messages:
       # print ("sending msg", msg)
-      # can_msg = can.Message(arbitration_id=msg[0], data=msg[1], is_extended_id=False, is_rx=False, channel=self.channel)
       can_msg = can.Message(arbitration_id=msg.address, data=msg.dat, is_extended_id=False, is_rx=False, channel=self.channel)
       # print ("sent ", can_msg)
       self.bus.send(can_msg)
