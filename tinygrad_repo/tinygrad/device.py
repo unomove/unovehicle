@@ -375,3 +375,5 @@ if __name__ == "__main__":
     except Exception as e:
       result = f"{colored('FAIL', 'red')} {e}"
     print(f"{'*' if device == Device.DEFAULT else ' '} {device:10s}: {result}")
+
+  print (Device.DEFAULT)

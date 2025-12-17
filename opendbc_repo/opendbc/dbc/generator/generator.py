@@ -62,5 +62,5 @@ def create_all(output_path: str):
 
 
 if __name__ == "__main__":
-  pass
-  # create_all(opendbc_root)
+  # pass
+  create_all(opendbc_root)

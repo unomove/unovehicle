@@ -46,8 +46,8 @@ class CarState(CarStateBase):
     # ret.run_mode = cp.vl["CDCU_VehState"]["CDCU_Veh_RunMode"]
     # irrelevant for non-car
     ret.gearShifter = GEAR_MAP[self.shifter_values.get(int(cp.vl["CDCU_DriveStatus"]["CDCU_MCU_GearAct"]))]
-    ret.cruiseState.speed = 40 * CV.KPH_TO_MS
-    ret.cruiseState.speedCluster = 40 * CV.KPH_TO_MS
+    ret.cruiseState.speed = 20 * CV.KPH_TO_MS
+    ret.cruiseState.speedCluster = 20 * CV.KPH_TO_MS
     ret.cruiseState.enabled = True
     ret.cruiseState.available = True
 

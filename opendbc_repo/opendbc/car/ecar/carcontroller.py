@@ -83,9 +83,16 @@ class CarController(CarControllerBase):
     self.brake = 0.0
     self.last_torque = 0.0
 
-  def update_old(self, CC, CS, now_nanos):
+  def update(self, CC, CS, now_nanos):
     actuators = CC.actuators
     can_sends = []
+
+    if CC.longActive:
+      accel = actuators.accel
+      gas, brake = compute_gas_brake(actuators.accel, CS.out.vEgo)
+    else:
+      accel = 0.0
+      gas, brake = 0.0, 0.0
 
     lat_active = CC.latActive
 
@@ -93,36 +100,66 @@ class CarController(CarControllerBase):
       # Angular rate limit based on speed
       self.apply_angle_last = apply_steer_angle_limits_vm(actuators.steeringAngleDeg, self.apply_angle_last, CS.out.vEgoRaw, CS.out.steeringAngleDeg,
                                                           lat_active, CarControllerParams, self.VM)
-
       can_sends.append(self.ecar_can.create_steering_control(self.apply_angle_last))
 
-    if self.frame % 10 == 0:
-      can_sends.append(self.ecar_can._brake_cmd_msg(0, 0x0))
+      # longitudinal control
+
+      # *** apply brake hysteresis ***
+      pre_limit_brake, self.braking, self.brake_steady = actuator_hysteresis(brake, self.braking, self.brake_steady,
+                                                                          CS.out.vEgo, self.CP.carFingerprint)
+      # *** rate limit after the enable check ***
+      self.brake_last = rate_limit(pre_limit_brake, self.brake_last, -2., DT_CTRL)
+
+      # wind brake from air resistance decel at high speed
+      wind_brake = np.interp(CS.out.vEgo, [0.0, 2.3, 35.0], [0.001, 0.002, 0.15])
+      # all of this is only relevant for HONDA ECAR
+      max_accel = np.interp(CS.out.vEgo, self.params.ECAR_MAX_ACCEL_BP, self.params.ECAR_MAX_ACCEL_V)
+      # TODO this 1.44 is just to maintain previous behavior
+      pcm_speed_BP = [-wind_brake,
+                      -wind_brake * (3 / 4),
+                      0.0,
+                      0.5]
+      if not CC.longActive:
+        pcm_speed = 0.0
+        pcm_accel = int(0.0)
+      else:
+        pcm_speed_V = [0.0,
+                      np.clip(CS.out.vEgo - 2.0, 0.0, 100.0),
+                      np.clip(CS.out.vEgo + 2.0, 0.0, 100.0),
+                      np.clip(CS.out.vEgo + 5.0, 0.0, 100.0)]
+        pcm_speed = float(np.interp(gas - brake, pcm_speed_BP, pcm_speed_V))
+        pcm_accel = int(np.clip((accel / 1.44) / max_accel, 0.0, 1.0) * self.params.ECAR_GAS_MAX)
+      self.speed = pcm_speed
+      self.gas = pcm_accel / self.params.ECAR_GAS_MAX
+      self.accel = self.gas
+
+      ts = self.frame * DT_CTRL
+      apply_brake = np.clip(self.brake_last - wind_brake, 0.0, 1.0)
+      apply_brake = int(np.clip(apply_brake * self.params.ECAR_BRAKE_MAX, 0, self.params.ECAR_BRAKE_MAX - 1))
+      pump_on, self.last_pump_ts = brake_pump_hysteresis(apply_brake, self.apply_brake_last, self.last_pump_ts, ts)
+      self.apply_brake_last = apply_brake
+      self.brake = apply_brake / self.params.ECAR_BRAKE_MAX
+
+      can_sends.append(self.ecar_can.create_longitudinal_command(self.speed, "drive"))
+      can_sends.append(self.ecar_can._brake_cmd_msg(self.brake, 0x0))
       can_sends.append(self.ecar_can._park_cmd_msg(0))
-
-
-    # print ("GearShifter", CS.out.gearShifter)
-    # Longitudinal control
-    if self.CP.openpilotLongitudinalControl:
-      if self.frame % 4 == 0:
-        # accel = float(np.clip(actuators.accel, CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX))
-        can_sends.append(self.ecar_can.create_longitudinal_command(actuators.speed, CS.out.gearShifter))
-    else:
-      # Increment counter so cancel is prioritized even without openpilot longitudinal
-      if CC.cruiseControl.cancel:
-        can_sends.append(self.ecar_can.create_longitudinal_command(CS.out.vEgo, CS.out.gearShifter))
+      can_sends.append(self.ecar_can._bocy_cmd_msg())
+      can_sends.append(self.ecar_can._power_info_msg())
 
     # TODO: HUD control
     # new_actuators = actuators.as_builder()
     new_actuators = structs.CarControl.Actuators()
     new_actuators.steeringAngleDeg = self.apply_angle_last
-    new_actuators.speed = CS.out.vEgo
+    new_actuators.speed = self.speed
+    new_actuators.accel = self.accel
+    new_actuators.gas = self.gas
+    new_actuators.brake = self.brake
 
     self.frame += 1
     return new_actuators, can_sends
 
 
-  def update(self, CC, CS, now_nanos):
+  def update_torque(self, CC, CS, now_nanos):
     actuators = CC.actuators
     can_sends = []
 
